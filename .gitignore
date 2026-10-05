@@ -1,0 +1,13 @@
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+.vscode/
+.idea/
+*.sln
+*.xcworkspace
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+*.blend1
+.DS_Store
