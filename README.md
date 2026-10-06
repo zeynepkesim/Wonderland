@@ -25,9 +25,9 @@ An interactive scene where the user can explore the environment and interact wit
 
 ## Technologies
 
-- Unreal Engine
+- Unreal Engine 5 (Blueprints)
 - Blender
-- Git
+- Git and Git LFS
 - GitHub
 
 ## Milestone 1 (06.10)
@@ -46,4 +46,28 @@ An interactive scene where the user can explore the environment and interact wit
 
 ### Development Notes
 
-To be updated after the milestone with screenshots, videos, implementation notes, and progress.
+#### Scene and atmosphere
+
+I started from Unreal's First Person template (Blueprint) and built my own level, `L_Wonderland_Main`. The scene is a room open to the sky, with a doorway leading out into the clouds. A low sun shines in through the doorway, and volumetric fog turns its light into visible shafts. Sky atmosphere, volumetric clouds and a post-process volume (bloom, vignette) complete the soft, dream-like look.
+
+#### Environment
+
+Most of the environment is still a blockout made from basic shapes: the walls, an armchair, a window, a mirror, and clouds piled around and inside the room. The goldfish are an exception. I modelled a simple low-poly goldfish in Blender (body, tail and dorsal fin), exported it as FBX and imported it as a static mesh. Small goldfish float around the room, and one giant fish hangs outside the doorway to play with scale.
+
+#### Materials
+
+Everything uses a single master material, `M_Dream`. It blends between two colours (`ColorA` and `ColorB`) using a `Transform` parameter from 0 to 1, and also has parameters for glow, pulsing, roughness and metallic. Each object type has its own material instance with its own palette: turquoise walls, moss-green floor and armchair, orange fish, white clouds, a glowing window and a silver mirror. The second colour of each instance is the colour the object turns into when it transforms.
+
+#### Movement and camera
+
+I tuned the character to feel slower and lighter, closer to moving in a dream: lower walk speed and gravity, more control in the air, a softer stop, and a slightly narrower field of view.
+
+#### Interaction
+
+Pressing **E** casts a line trace 5 metres forward from the camera. If the object it hits implements the `BPI_Interactable` Blueprint Interface, its `Interact` event is called. Only the object being looked at receives the message.
+
+`BP_Interactable_Base` handles the transformation:
+- On start, it creates its own dynamic material instance, so each object can change independently of the others.
+- On `Interact`, a 1.5-second timeline drives the material's `Transform` parameter from 0 to 1 and scales the object up. Interacting again plays it in reverse.
+
+Two child Blueprints use this base: `BP_Interactable_Fish` (goldfish turn gold and grow) and `BP_Interactable_Cloud` (clouds turn sky blue).
