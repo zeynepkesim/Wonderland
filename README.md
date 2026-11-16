@@ -168,3 +168,59 @@ Instead of a separate bookshelf I used the drawer cabinet, since it was already 
 When the drawer transforms, it doesn't grow (its `ScaleMultiplier` is 1). Instead the books float up, each a bit higher than the one before (from 40 to 120 cm), turning and tilting slightly as they go. To keep the glow, the colour change and the sparkles working without rewriting them, all five books share one dynamic material, and the drawer hands that material to the parent class in place of its own. So the parent's logic just works on the books: they glow while you look, then turn from dark red to gold.
 
 The Blueprint overrides `Interact`, checks that the drawer hasn't already transformed, calls the parent's `Interact`, and then plays a three-second timeline that moves every book from its saved starting position. At first the books barely moved. The maths nodes for the height weren't chained together, so each book rose by its index in centimetres (0 to 4 cm) instead of 40 to 120.
+
+## Milestone 4 (17.11)
+
+**Goal:** Give the dream a beginning and an ending.
+
+- Make the room fade into white clouds or fog once every object has transformed ~ 2h
+- Add soft ambient sound and a gentle sound when an object transforms ~ 1h
+- Finish the window so it shows a view of another place ~ 2h
+- Fade in from white when the game starts and fade back to white when the dream ends ~ 1h
+
+**Bonus Tasks:**
+
+- End the dream with a short cinematic camera shot
+- Give the sofa or the armchair its own transformation
+
+### Development Notes
+
+#### Start and End Transitions
+
+The game opens on a white screen that clears over three seconds, and ends by fading back to white. Both use `Start Camera Fade` on the player camera manager: the Level Blueprint fades from alpha 1 to 0 on start, and `BP_DreamDirector` fades from 0 to 1 at the end with *Hold When Finished* enabled. *Should Fade Audio* is enabled in both, so the music fades together with the image.
+
+The end of the dream is handled by a new `EndDream` event in `BP_DreamDirector`. When the world transition timeline finishes, the director checks whether `TransformedCount` has reached `TotalInteractables` and, if so, calls `EndDream`.
+
+#### Dissolving into Fog
+
+`EndDream` plays a five-second timeline (`TL_DreamFog`) with an ease-in-out curve. It blends the height fog from its final dream state (`EndFogDensity`, `EndFogColor`) to `DreamFogDensity` and `DreamFogColor`, so the room gradually disappears into a dense, pale lilac fog. Two seconds later, the screen fades to white.
+
+I chose pale lilac over pure white because it continues the pink and purple tones the world shifts into, while still reading as nearly white.
+
+#### Sound
+
+- **Background music:** a royalty-free psychedelic track (Floating in Space by geoffharvey) from Pixabay, in the spirit of late-60s Pink Floyd and the Beatles. It plays on a looping Ambient Sound without attenuation, so it is heard evenly across the room.
+- **Transformation sound:** a short sound effect (Reverse Cymbal Sound Effect) from Pixabay, played with `Play Sound 2D` in `BP_Interactable_Base` together with the particle burst. The pitch is randomised between 0.9 and 1.1 to avoid repetition. Since all interactables inherit from the base class, none of the child Blueprints needed changes.
+
+#### Window View
+
+The window frame is mounted on a solid wall, so instead of an actual opening, the glass uses a material that fakes depth. `M_WindowView` is an unlit material showing a photo of a lilac sky (Pixabay). A `BumpOffset` node shifts the texture coordinates based on the viewing angle, creating a parallax effect that makes the sky appear to sit far behind the glass.
+
+`MI_WindowView` exposes these parameters:
+- `ScaleU` and `ScaleV` scale the texture separately, since the window is tall and the photo is wide
+- `OffsetU` and `OffsetV` select the visible part of the photo
+- `Depth` controls the strength of the parallax
+- `Brightness` is kept low, because auto exposure in the darker room would otherwise wash out the unlit image
+
+The doorway shows the plain outside, while the window shows a different place entirely.
+
+#### Floating Armchair (Bonus)
+
+`BP_Interactable_Armchair` is a child of `BP_Interactable_Base`. When it transforms, the chair rises 80 cm over three seconds while its colour shifts towards lilac, then keeps floating in the air, bobbing gently and rotating slowly.
+
+**Material:** The armchair's imported material routes its colour through `MF_PhongToMetalRoughness`. I added a `Tint` parameter multiplied after this function and a `GlowStrength` parameter driving Emissive, so the parent's gaze glow and colour logic work without changes. Because the tint is multiplied, the green turns into a muted, greyish lilac rather than a pure one.
+
+**Movement:**
+- `TL_Rise` (3 s) moves the chair up from its stored start location and blends `Tint` from white to `DreamTint`.
+- When the timeline finishes, `bFloating` is set and `Tick` takes over. The height is `FloatHeight + sin(FloatTime × 1.5) × BobHeight` (72 to 88 cm by default), and the chair rotates by `SpinSpeed × DeltaSeconds` around the vertical axis.
+- `FloatTime` starts at zero at the top of the rise, so the switch to bobbing is smooth.
