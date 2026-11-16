@@ -216,11 +216,11 @@ The doorway shows the plain outside, while the window shows a different place en
 
 #### Floating Armchair (Bonus)
 
-`BP_Interactable_Armchair` is a child of `BP_Interactable_Base`. When it transforms, the chair rises 80 cm over three seconds while its colour shifts towards lilac, then keeps floating in the air, bobbing gently and rotating slowly.
+`BP_Interactable_Armchair` is a child of `BP_Interactable_Base`. When it transforms, the chair rises 80 cm over three seconds, then keeps floating in the air, bobbing gently and rotating slowly.
 
-**Material:** The armchair's imported material routes its colour through `MF_PhongToMetalRoughness`. I added a `Tint` parameter multiplied after this function and a `GlowStrength` parameter driving Emissive, so the parent's gaze glow and colour logic work without changes. Because the tint is multiplied, the green turns into a muted, greyish lilac rather than a pure one.
+**Material:** The armchair's imported material routes its colour through `MF_PhongToMetalRoughness` and had no glow parameter. I added a `GlowStrength` parameter driving Emissive, so the parent's gaze glow works on the chair without changes.
 
 **Movement:**
-- `TL_Rise` (3 s) moves the chair up from its stored start location and blends `Tint` from white to `DreamTint`.
+- `TL_Rise` (3 s) moves the chair up from its stored start location.
 - When the timeline finishes, `bFloating` is set and `Tick` takes over. The height is `FloatHeight + sin(FloatTime × 1.5) × BobHeight` (72 to 88 cm by default), and the chair rotates by `SpinSpeed × DeltaSeconds` around the vertical axis.
 - `FloatTime` starts at zero at the top of the rise, so the switch to bobbing is smooth.
